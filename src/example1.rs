@@ -8,6 +8,7 @@ use halo2_proofs::{
     pasta::Fp, dev::MockProver,
 };
 
+// #[derive(Debug, Clone)] is a Rust attribute used to automatically generate implementations of the Debug and Clone traits for a struct
 #[derive(Debug, Clone)]
 struct ACell<F: FieldExt>(AssignedCell<F, F>);
 
