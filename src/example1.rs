@@ -14,7 +14,7 @@ struct ACell<F: FieldExt>(AssignedCell<F, F>);
 
 #[derive(Debug, Clone)]
 
-// If you look back into the example we have 3 advice columns
+// If you look back into the circuit description we have 3 advice columns
 // 1 selector column and 1 instance colums. We can ignore the instance column for now. This is a column that encodes the public input!
 struct FiboConfig { 
     pub advice: [ Column<Advice>; 3],
@@ -71,7 +71,7 @@ impl<F: FieldExt> FiboChip<F> {
             // ---------------------------------
             //  a    |   b   |       |   s
             //       |       |   c   |   
-
+            // Query returns you a cell from a column to be used inside the custom gate j
             let s = meta.query_selector(selector);
             let a = meta.query_advice(col_a, Rotation::cur());
             let b = meta.query_advice(col_b, Rotation::cur());
@@ -83,7 +83,7 @@ impl<F: FieldExt> FiboChip<F> {
             vec![s * (a + b - c)] // s * (a + b - c) = 0
         }); 
 
-        // return the configuration of the circuit. This included the advice columns, the selctor and the custom gates.
+        // return the configuration of the circuit. This included the advice columns and the selector, while the custom gates have been mutated on `meta`.
         FiboConfig { advice: [col_a, col_b, col_c ], selector}
     }
 
@@ -165,6 +165,7 @@ impl<F: FieldExt> FiboChip<F> {
 
 #[derive(Default)]
 
+// We define the circuit with the field a, b which are the input values for our circuit
 struct MyCircuit<F> {
     pub a: Option<F>,
     pub b: Option<F>,
@@ -175,6 +176,7 @@ impl<F: FieldExt> Circuit<F> for MyCircuit<F> {
     type FloorPlanner = SimpleFloorPlanner;
 
     // It generates an empty circuit without any witness
+    // You can use this api to generate proving key or verification key without any witness
     fn without_witnesses(&self) -> Self {
         Self::default()
     }
@@ -184,6 +186,7 @@ impl<F: FieldExt> Circuit<F> for MyCircuit<F> {
         FiboChip::configure(meta)
     } 
     
+    // API to be called after the constraint system is defined.
     // Assign the values inside the actual prover input inside the circuit.
     // mut layouter: impl Layouter<F> specifies a function parameter named layouter, which is mutable (mut keyword), and implements the Layouter<F> trait.
     fn synthesize(&self, config: Self::Config, mut layouter: impl Layouter<F>) -> Result<(), Error> {

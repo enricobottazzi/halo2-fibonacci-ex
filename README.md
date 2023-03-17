@@ -1,12 +1,51 @@
+# Halo2 Fibonacci Example 
+
+Type of columns
+
+<img src="./img/columns.png">
+
+Core apis for data structures 
+
+<img src="./img/api-1.png">
+
+Core apis for constraint system 
+
+<img src="./img/api-2.png">
+
+The first 6 apis are used to create columns. `selector` is used for custom gates. `complex_selector` can be used in look up arguments. 
+The last 2 apis are used to set up actual constraints such as copy constraints and custom gates. In particular, for copy constraint/permutation check, the `enable_equality` API must be used together with the `copy_advice` API (see example1.rs for more details).
+
+**Concept of layouter**
+
+The layouter will be used during the assignment, namely when you fill up a table with the witness. Each time you will fill up a region. You won't fill the entire table at once. It takes a region as input and assign values to that region.
+
+A region must be designed in a way that fully covers a custom gate. 
+
+<img src="./img/valid-region.png">
+
+<img src="./img/invalid-region.png">
+
+**How to implement a circuit** 
+
+<img src="./img/implement.png">
+
+The chip is not strictly necessary, but it is good to create gadgets. For more complex circuits you will have multiple chips and use them as lego blocks. A Circuit can use different chips. 
+ 
+
 # Open Questions about Halo2
 
 - What are the layouters/regions and why would you use that? and what is the offset here?
+
+A: A region is like a block that can span on multiple lines and selectors and within this block you are concerned about relative offsets. Inside a region you basically need cells to be placed in specific position on relative to the other. 
+If you do not care about how two blocks interact with each other, then you should define them in separate regions. By setting separate regions, you let the layouter perform some optimization on the layout of your region! 
+
+- Do I need to create a region for every value that I assign into the circuit? What does region1 in the example mean? It seems there's no custom gates there...
 - What is FloorPlanner?
-- Where am I enforcing the permutation check? Is `copy_advice` the way to set copy constraints? 
+- Where am I enforcing the permutation check? Is `copy_advice` the way to set copy constraints? Or is it `enable_equality`?
 - What is a fiboChip, how do you define it?
 - What should we pass inside instance? Why do we pass an empty vector?
 - K is the size of the circuit. What does that mean? This is performed in the main function.
-
+- What if I have empty rows? Do I need to fill up each row?
 
 # Solved Questions about Halo2
 
@@ -20,7 +59,7 @@ A: You need to supply the entire witness, but, of course, you can create scripts
 
 Q: What is the rotation doing? 
 
-A: In the example we used the rotation feature when querying values that will be used to set up custom gates. In the case of the example we are creating a custom gate that covers only one row. So we query value from the current row using `cur()`. If we wanted to create more complex gates we could use the `next()` method to query values from the next row or also access value from a specifc row.
+A: In the example we used the rotation feature when querying values that will be used to set up custom gates. In the case of the example we are creating a custom gate that covers only one row. So we query value from the current row using `cur()`. If we wanted to create more complex gates we could use the `next()` or `prev()` method to query values from the next row or also access value from a specifc row by specifying the offset! 
 
 Q: Is the name of the constraint something arbitrary or is this encoded in the package?
 
@@ -35,6 +74,19 @@ A: Meta is an instance of a default constraint system. You can see it's been use
         let config = ConcreteCircuit::configure(&mut cs);
 ```
 
+The process look like: 
+
+**key gen time** 
+
+- create a circuit instance 
+- define the constraint system by calling `configure`
+- `synthesize` runs ignoring witness assignment
+
+**proving time** 
+
+- the prover receives a circuit instance
+- The prover assign the values inside the circuit by calling `synthesize`
+
 Q: What does pub a and pub b mean inside our MyCircuit struct?
 
 A: There are just two fields assigned to the circuit struct. The pub is a rust keyword that allows you to access the field from outside the struct. These 2 fields are the used inside the `assign_first_row` method to set the first row of the circuit. The other rows of the circuit are computed starting from the first row using the `assign_row` method.
@@ -47,23 +99,17 @@ Q: When would you even set the selector to 0?
 
 A: You can set the selector to 0 when you want to skip a constraint. Also the number of rows is always 2^k, so if you are not using the entire rows you can set the selector to 0.
 
+Q: Would it be possible to create a region that doesn't involve any selector? 
+
+A: Yes, for example when you want to initalize some input values. You can create a region that doesn't involve any selector and just assign values to the table.
+
+<img src="./img/no-selector-region.png">
+
 # Fibonacci Circuit 
-
-The goal is that given f(0)=x and f(1)=y, we will prove that f(9)=z
-
-### Example 1
 
 <img src="./img/fibonacci-table-1.png"  width="60%" height="30%">
 
-- Go into cargo.toml and add dependencies to that
+**Run**
 
-
-Run 
-
+You can find all the reference inside the repository itself!
 ```cargo run --bin example1```
-
-## General structure 
-
-**FiboChip** : Create fiboChip, 
-
-**Config**: need to set the config
