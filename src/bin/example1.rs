@@ -229,6 +229,7 @@ fn main() {
 
     // The mock prover is a function that execute the configuration of the circuit by running its method configure
     // and also execute the syntetize function, by passing in the actual input.
+    // The instance vector is empty as we don't have any public input to pass to the function
     let prover = MockProver::run(k, &circuit, vec![]).unwrap();
 
     prover.assert_satisfied();

@@ -1,5 +1,7 @@
 # Halo2 Fibonacci Example 
 
+
+
 Type of columns
 
 <img src="./img/columns.png">
@@ -31,7 +33,6 @@ A region must be designed in a way that fully covers a custom gate.
 
 The chip is not strictly necessary, but it is good to create gadgets. For more complex circuits you will have multiple chips and use them as lego blocks. A Circuit can use different chips. 
  
-
 # Open Questions about Halo2
 
 - What are the layouters/regions and why would you use that? and what is the offset here?
@@ -109,7 +110,17 @@ A: Yes, for example when you want to initalize some input values. You can create
 
 <img src="./img/fibonacci-table-1.png"  width="60%" height="30%">
 
-**Run**
+**Run example 1**
 
 You can find all the reference inside the repository itself!
 ```cargo run --bin example1```
+
+The example 1 refers to this video => https://learn.0xparc.org/materials/halo2/learning-group-1/halo2-api
+
+**Run example 2**
+
+The example 2 refers to this video => https://learn.0xparc.org/materials/halo2/learning-group-1/halo2-api-continued
+
+The example adds the instance columns on top of the first example
+
+```cargo run --bin example2```
