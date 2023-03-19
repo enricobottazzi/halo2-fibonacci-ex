@@ -7,3 +7,4 @@ edition = "2021"
 
 [dependencies]
 halo2_proofs = "0.1.0"
+plotters = "0.3.1"

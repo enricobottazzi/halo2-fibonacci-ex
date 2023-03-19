@@ -1,7 +1,5 @@
 # Halo2 Fibonacci Example 
 
-
-
 Type of columns
 
 <img src="./img/columns.png">
@@ -47,6 +45,10 @@ If you do not care about how two blocks interact with each other, then you shoul
 - What should we pass inside instance? Why do we pass an empty vector?
 - K is the size of the circuit. What does that mean? This is performed in the main function.
 - What if I have empty rows? Do I need to fill up each row?
+- What is the type of optmization that we are performing in example3? 
+
+A: In the example3 we are fewer advice columns (we move from 3 to 1) and we perform lesser permutation checks
+- Why we change the type to AssignedCell <F,F>? Now we no longer access a value from a cell using `0`
 
 # Solved Questions about Halo2
 
@@ -122,5 +124,15 @@ The example 1 refers to this video => https://learn.0xparc.org/materials/halo2/l
 The example 2 refers to this video => https://learn.0xparc.org/materials/halo2/learning-group-1/halo2-api-continued
 
 The example adds the instance columns on top of the first example
+
+```cargo run --bin example2```
+
+**Run example 3**
+
+The example 3 refers to this video starting from minute 21 => https://learn.0xparc.org/materials/halo2/learning-group-1/halo2-api-continued
+
+The example adds some optimization on top of the second example. 
+
+In the example 3 we consider only a single advice column
 
 ```cargo run --bin example2```
