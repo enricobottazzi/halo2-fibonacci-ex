@@ -62,6 +62,7 @@ impl<F: FieldExt> FiboChip<F> {
         meta.enable_equality(col_a);
         meta.enable_equality(col_b);
         meta.enable_equality(col_c);
+        // We also enable equality on the instance column as we need to execute a permutation check on that too!
         meta.enable_equality(instance);
 
         // create custom gate. This is the first constraint (of custom gate type) described in fibonacci-constraint-1.png
@@ -106,7 +107,7 @@ impl<F: FieldExt> FiboChip<F> {
 
             // Assign the value to a and b. It returns an assigned cell!
             let a_cell = region.assign_advice(
-                || "a",
+                || "a", // we are assigning to column a
                 self.config.advice[0], 
                 0, 
                 || a.ok_or(Error::Synthesis),
@@ -146,6 +147,7 @@ impl<F: FieldExt> FiboChip<F> {
                 // This is the copy constraint basically
                 // I'm copying the prev_b to the current region in advice column 0 (aka "a")
                 // Offset 0 means that I'm copying to the first row in the region
+                // copy advice is the permutation check!
                 prev_b.0.copy_advice(|| "a", &mut region, self.config.advice[0], 0)?;
                 // I'm copying the prev_c to the current region in advice column 1 (aka "b")
                 // Offset 0 means that I'm copying to the first row in the region
@@ -198,6 +200,7 @@ impl<F: FieldExt> Circuit<F> for MyCircuit<F> {
     }
 
     // create configuration for the Circuit
+    // We create the columns here such that these can be passed trough different chip configuration
     fn configure(meta: &mut ConstraintSystem<F>) -> Self::Config {
         let col_a = meta.advice_column();
         let col_b = meta.advice_column();
@@ -268,8 +271,26 @@ fn main() {
 
     prover.assert_satisfied();
 
+    print_circuit();
+
 }
 
- 
+#[cfg(feature = "dev-graph")]
+fn print_circuit() {
+    use plotters::prelude::*;
+    let root = BitMapBackend::new("fib-2-layout.png", (1024, 3096)).into_drawing_area();
+    root.fill(&WHITE).unwrap();
+    let root = root.titled("Fib 2 Layout", ("sans-serif", 60)).unwrap();
 
+    let a = Fp::from(1);
+    let b = Fp::from(1);
 
+    let circuit = MyCircuit {
+        a: Some(a),
+        b: Some(b),
+    };
+    
+    halo2_proofs::dev::CircuitLayout::default()
+        .render(4, &circuit, &root)
+        .unwrap();
+}

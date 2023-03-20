@@ -125,14 +125,40 @@ The example 2 refers to this video => https://learn.0xparc.org/materials/halo2/l
 
 The example adds the instance columns on top of the first example
 
-```cargo run --bin example2```
+```cargo run --all-features  --bin example2``` to print out the graph of the circuit
 
 **Run example 3**
 
 The example 3 refers to this video starting from minute 21 => https://learn.0xparc.org/materials/halo2/learning-group-1/halo2-api-continued
 
-The example adds some optimization on top of the second example. 
+The example adds some optimization on top of the second example. In particular we can see that in the example 1 and 2 the structure of the table contained three column and each row was responsible for a fibonacci operation. This can be described by this table
+
+a b c
+1 1 2
+1 2 3
+2 3 5
+3 5 8
+5 8 13
+8 13 21
+13 21 34
+21 34 55
+
+We can see that we are performing a lot of redundant computation. Especially the 2 permutation checks between two rows (`prev_b=a` and `prev_c` = b`) are not really necessary. We create an advice table that has this structure. This will eliminate the need for these permutation checks. 
+
+a
+1
+1
+2
+3
+5
+8
+13
+21
+34
+55
+
+The new custom gate structure can be visualed like this
 
 In the example 3 we consider only a single advice column
 
-```cargo run --bin example2```
+```cargo run --all-features  --bin example3``` to print out the graph of the circuit

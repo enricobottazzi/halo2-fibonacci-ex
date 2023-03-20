@@ -1,5 +1,4 @@
 use std::marker::PhantomData;
-use plotters::prelude::*;
 use halo2_proofs::{
     arithmetic::FieldExt,
     circuit::*,
@@ -13,8 +12,7 @@ use halo2_proofs::{
 struct ACell<F: FieldExt>(AssignedCell<F, F>);
 
 #[derive(Debug, Clone)]
-// If you look back into the circuit description we have 3 advice columns
-// 1 selector column and 1 instance colums. We can ignore the instance column for now. This is a column that encodes the public input!
+// This new version only has a single advice column
 struct FiboConfig { 
     pub advice: Column<Advice>,
     pub selector: Selector,
@@ -22,18 +20,14 @@ struct FiboConfig {
 }
 
 #[derive(Debug, Clone)]
-// struct that is bounded to a generic type <F:FieldExt>
 struct FiboChip<F: FieldExt> {
     config: FiboConfig,
     _marker: PhantomData<F>,
 }
 
 
-// Now we add methods to this FiboChip struct. Impl is a keyword that let us add methods to a struct.
-// impl<F: FieldExt> FiboChip<F> defines an implementation of the FiboChip struct for a generic type parameter F that implements the FieldExt trait
 impl<F: FieldExt> FiboChip<F> {
 
-    // This method is the constructor for the chip!
     pub fn construct(config: FiboConfig) -> Self {
         Self {
             config,
@@ -41,10 +35,7 @@ impl<F: FieldExt> FiboChip<F> {
         }
     }
 
-    // This method is where we define the Config of the chip by creating colums 
-    // and defining custom gates
-    // In this example we also pass the advice and instance colums directly to the configure function. by doing that we can create 
-    // columns that can be shared across different configs.
+    // We modified it to take only one advice column
     pub fn configure(
         meta: &mut ConstraintSystem<F>,
         advice: Column<Advice>,
@@ -53,13 +44,13 @@ impl<F: FieldExt> FiboChip<F> {
         // create the selector
         let selector: Selector = meta.selector();
 
-        // In order to perform the permutation check later on we need to enable equality
-        // By enabling equality, we tell the halo2 compiler that these columns are gonna be used inside the permutation check.
-        // If we don't enable it, we won't be able to perform the permutation check.
+        // We still need to enable the equality here. But we won't use it to perform the permutation checks as in the old version,
+        // rather we will use it to perform the permutation check with the instance column in order to expose the public input
         meta.enable_equality(advice);
         meta.enable_equality(instance);
 
         // Now the copy constraint becomes a bit different! We have only one advise column and all the witness is passed to that advise column
+        // a,b,c are all queriesd from the same advice column by performing some rotation. The custom gate has a different shape
         meta.create_gate("add", |meta| {
             // advice| selector
             // ----------------
@@ -71,9 +62,7 @@ impl<F: FieldExt> FiboChip<F> {
             let b = meta.query_advice(advice, Rotation::next());
             let c = meta.query_advice(advice, Rotation(2));
 
-            // return the contraint(s) inside our custom gate. You can define as many
-            // constraints as you want inside the same custom gate
-            // If selector is turned off, the constraint will be satisfied whatever value is assigned to a,b,c 
+            // This remains the same!
             vec![s * (a + b - c)] // s * (a + b - c) = 0
         }); 
 
@@ -92,24 +81,30 @@ impl<F: FieldExt> FiboChip<F> {
         layouter.assign_region(|| "entire fibonacci table", |mut region| {
 
             // We need to enable the selector in that region because the constraint is set!
+            // The selector will be enable at each line as the copy constraint must be checked on each line!
             self.config.selector.enable(&mut region, 0)?;
             self.config.selector.enable(&mut region, 1)?;
 
+            // this api is performing the assignment and the copy constaint from the instance column
             let mut a_cell = region.assign_advice_from_instance(|| "1", self.config.instance, 0, self.config.advice, 0)?;
             let mut b_cell = region.assign_advice_from_instance(|| "1", self.config.instance, 1, self.config.advice, 1)?;
 
+            // we already assigned the first two rows, we need to assign all the other rows
             for row in 2..nrows {
+                // The selector must enable to each row apart from the last 2 ones where we won't have any copy constraint!
                 if row < nrows - 2 {
                     self.config.selector.enable(&mut region, row)?;
                 }
-                // retrieve value of c
+                // compute value of c
                 let c_val = a_cell.value().and_then(
                     |a| {
                         b_cell.value().map(|b| *a + *b)
                     }
                 );
 
-                // Assign value to c cell
+                // Assign c value to c cell. This will be the next row added to the table
+                // important to note here that the offset inside the region is the row number 
+                // 0 as offset inside the region mean the 0 row of the region!
                 let c_cell = region.assign_advice(
                     || "advice",
                     self.config.advice,
@@ -117,10 +112,12 @@ impl<F: FieldExt> FiboChip<F> {
                     || c_val.ok_or(Error::Synthesis),
                 )?;
 
+                // Switch to the next step of the sequence
                 a_cell = b_cell;
                 b_cell = c_cell;
             }
 
+            // We only need to return the last cell as we need to check if this matches the expected outputß 
             Ok(b_cell)
     })
 }
@@ -157,24 +154,21 @@ impl<F: FieldExt> Circuit<F> for MyCircuit<F> {
         FiboChip::configure(meta, advice, instance)
     } 
     
-    // API to be called after the constraint system is defined.
-    // Assign the values inside the actual prover input inside the circuit.
-    // mut layouter: impl Layouter<F> specifies a function parameter named layouter, which is mutable (mut keyword), and implements the Layouter<F> trait.
     fn synthesize(&self, config: Self::Config, mut layouter: impl Layouter<F>) -> Result<(), Error> {
         // We create a new instance of chip using the config passed as input
         let chip = FiboChip::construct(config);
 
+        // We no longer need these functions as the copy constraint is already enforced by assign_advice_from_instance function.
+        // chip.expose_public(layouter.namespace(|| "private a"), &prev_a, 0);
+        // chip.expose_public(layouter.namespace(|| "private b"), &prev_b, 1);
+
+        // First we assign the rows
         let out_cell = chip.assign(
-            layouter.namespace(|| "entire table"), 
+            layouter.namespace(|| "entire table"),
             10
         )?;
 
-        // now we assign stuff inside the circuit!
-        // first row is particular so we create a specific function for that.
-        // This function will take as input the "a" and "b" value passed to instantiate the circuit
-        // We also use a layouter as this is a good way to separate different regions of the circuit
-        // We can also assign name to the layouter 
-        // Also we want to expose the output of the circuit to the public
+        // Check that the last cell matches the output. Here we need to enforce the copy constraint!
         chip.expose_public(layouter.namespace(|| "output"), out_cell, 2)?;
 
         Ok(())
@@ -188,6 +182,8 @@ fn main() {
     let b = Fp::from(1);
     let out = Fp::from(55);
 
+    // We no longer need to pass a,b inside the circuit struct as these are already specified in the instance column
+    // It would make sense to keep the value here only if these were passed to the circuit as private input
     let circuit = MyCircuit(PhantomData);
 
     let public_input = vec![a, b, out];
@@ -199,33 +195,20 @@ fn main() {
 
     prover.assert_satisfied();
 
+    print_circuit();
+
 }
 
+#[cfg(feature = "dev-graph")]
 fn print_circuit() {
-        // Create the area you want to draw on.
-    // Use SVGBackend if you want to render to .svg instead.
-    let root = BitMapBackend::new("layout.png", (1024, 768)).into_drawing_area();
-    root.fill(&WHITE).unwrap();
-    let root = root
-        .titled("Example Circuit Layout", ("sans-serif", 60))
-        .unwrap();
+        use plotters::prelude::*;
+        let root = BitMapBackend::new("fib-3-layout.png", (1024, 3096)).into_drawing_area();
+        root.fill(&WHITE).unwrap();
+        let root = root.titled("Fib 3 Layout", ("sans-serif", 60)).unwrap();
 
-    let circuit = MyCircuit::<Fp>(PhantomData);
-
-    halo2_proofs::dev::CircuitLayout::default()
-        // You can optionally render only a section of the circuit.
-        .view_width(0..2)
-        .view_height(0..16)
-        // You can hide labels, which can be useful with smaller areas.
-        .show_labels(false)
-        // Render the circuit onto your area!
-        // The first argument is the size parameter for the circuit.
-        .render(5, &circuit, &root)
-        .unwrap();
-
+        let circuit = MyCircuit::<Fp>(PhantomData);
+        halo2_proofs::dev::CircuitLayout::default()
+            .render(4, &circuit, &root)
+            .unwrap();
 }
-
-
- 
-
 
