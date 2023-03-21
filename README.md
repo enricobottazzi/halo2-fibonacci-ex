@@ -1,4 +1,8 @@
-# Halo2 Fibonacci Example 
+# Halo2 Fibonacci Example Part 1
+
+This tutorial is based on this learning group https://learn.0xparc.org/materials/halo2/learning-group-1
+
+You can find the part 2 of this tutorial here => https://github.com/enricobottazzi/halo2-more-examples
 
 Type of columns
 
