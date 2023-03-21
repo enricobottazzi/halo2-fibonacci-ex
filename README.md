@@ -31,25 +31,6 @@ A region must be designed in a way that fully covers a custom gate.
 
 The chip is not strictly necessary, but it is good to create gadgets. For more complex circuits you will have multiple chips and use them as lego blocks. A Circuit can use different chips. 
  
-# Open Questions about Halo2
-
-- What are the layouters/regions and why would you use that? and what is the offset here?
-
-A: A region is like a block that can span on multiple lines and selectors and within this block you are concerned about relative offsets. Inside a region you basically need cells to be placed in specific position on relative to the other. 
-If you do not care about how two blocks interact with each other, then you should define them in separate regions. By setting separate regions, you let the layouter perform some optimization on the layout of your region! 
-
-- Do I need to create a region for every value that I assign into the circuit? What does region1 in the example mean? It seems there's no custom gates there...
-- What is FloorPlanner?
-- Where am I enforcing the permutation check? Is `copy_advice` the way to set copy constraints? Or is it `enable_equality`?
-- What is a fiboChip, how do you define it?
-- What should we pass inside instance? Why do we pass an empty vector?
-- K is the size of the circuit. What does that mean? This is performed in the main function.
-- What if I have empty rows? Do I need to fill up each row?
-- What is the type of optmization that we are performing in example3? 
-
-A: In the example3 we are fewer advice columns (we move from 3 to 1) and we perform lesser permutation checks
-- Why we change the type to AssignedCell <F,F>? Now we no longer access a value from a cell using `0`
-
 # Solved Questions about Halo2
 
 Q: Is there a solidity snark verifier for halo2?
@@ -162,3 +143,23 @@ The new custom gate structure can be visualed like this
 In the example 3 we consider only a single advice column
 
 ```cargo run --all-features  --bin example3``` to print out the graph of the circuit
+
+# Open Questions about Halo2
+
+- What are the layouters/regions and why would you use that? and what is the offset here?
+
+A: A region is like a block that can span on multiple lines and selectors and within this block you are concerned about relative offsets. Inside a region you basically need cells to be placed in specific position on relative to the other. 
+If you do not care about how two blocks interact with each other, then you should define them in separate regions. By setting separate regions, you let the layouter perform some optimization on the layout of your region! 
+
+- Do I need to create a region for every value that I assign into the circuit? What does region1 in the example mean? It seems there's no custom gates there...
+- What is FloorPlanner?
+- Where am I enforcing the permutation check? Is `copy_advice` the way to set copy constraints? Or is it `enable_equality`?
+- What is a fiboChip, how do you define it?
+- What should we pass inside instance? Why do we pass an empty vector?
+- K is the size of the circuit. What does that mean? This is performed in the main function.
+- What if I have empty rows? Do I need to fill up each row?
+- What is the type of optmization that we are performing in example3? 
+
+A: In the example3 we are fewer advice columns (we move from 3 to 1) and we perform lesser permutation checks
+- Why we change the type to AssignedCell <F,F>? Now we no longer access a value from a cell using `0`
+
