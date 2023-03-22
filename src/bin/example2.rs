@@ -15,7 +15,7 @@ struct ACell<F: FieldExt>(AssignedCell<F, F>);
 #[derive(Debug, Clone)]
 
 // If you look back into the circuit description we have 3 advice columns
-// 1 selector column and 1 instance colums. We can ignore the instance column for now. This is a column that encodes the public input!
+// 1 selector column and 1 instance colums. This is a column that encodes the public input!
 struct FiboConfig { 
     pub advice: [ Column<Advice>; 3],
     pub selector: Selector,

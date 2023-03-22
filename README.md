@@ -114,29 +114,34 @@ The example 3 refers to this video starting from minute 21 => https://learn.0xpa
 
 The example adds some optimization on top of the second example. In particular we can see that in the example 1 and 2 the structure of the table contained three column and each row was responsible for a fibonacci operation. This can be described by this table
 
-a b c
-1 1 2
-1 2 3
-2 3 5
-3 5 8
-5 8 13
-8 13 21
-13 21 34
-21 34 55
+| a    | b      | c    |
+| ---- | ------| --- |
+| 1 | 1 | 2 |
+| 1 | 2 |3 |
+| 2 |3 |5 | 
+| 3 |5 |8 | 
+| 5 |8 |13 |
+| 8 |13| 21 | 
+| 13 |21 |34 | 
+| 21 |34| 55 |
 
-We can see that we are performing a lot of redundant computation. Especially the 2 permutation checks between two rows (`prev_b=a` and `prev_c` = b`) are not really necessary. We create an advice table that has this structure. This will eliminate the need for these permutation checks. 
 
-a
-1
-1
-2
-3
-5
-8
-13
-21
-34
-55
+We can see that we are performing a lot of redundant computation. Especially the 2 permutation checks between two rows (`prev_b=a` and `prev_c` = b`) are not really necessary. We create an advice table that has this structure. This will eliminate the need for these permutation checks.
+
+a     |
+-------
+1    |  
+1     |
+2 | 
+3 |
+5 |
+8 |
+13 |
+21 |
+34 |
+55 |
+
+
 
 The new custom gate structure can be visualed like this
 

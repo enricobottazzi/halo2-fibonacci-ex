@@ -134,7 +134,6 @@ impl<F: FieldExt> FiboChip<F> {
 
 #[derive(Default)]
 
-// We define the circuit with the field a, b which are the input values for our circuit
 struct MyCircuit<F>(PhantomData<F>);
 
 impl<F: FieldExt> Circuit<F> for MyCircuit<F> {
