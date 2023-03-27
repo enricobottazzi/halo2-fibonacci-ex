@@ -171,4 +171,5 @@ If you do not care about how two blocks interact with each other, then you shoul
 
 A: In the example3 we are fewer advice columns (we move from 3 to 1) and we perform lesser permutation checks
 - Why we change the type to AssignedCell <F,F>? Now we no longer access a value from a cell using `0`
+- Are values included in the fixed column to be considered as public values? Or are these part of the witness?
 
